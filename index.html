@@ -13,6 +13,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .settings-icon:active{transform:scale(.96)}
 .navin{display:grid!important;grid-template-columns:repeat(4,1fr);overflow:visible!important}
 .navin button{min-width:0!important}
+
+.quick-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.quick-row input{min-width:0}
+.parse-results{margin-top:12px}.parse-result{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}.parse-result:first-child{border-top:0}.parse-warn{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px}.match-note{font-size:11px;opacity:.72}
+@media(max-width:390px){.quick-row{grid-template-columns:1fr}.quick-row button{width:100%}}
 </style>
 <meta name="theme-color" content="#0B0B0D" id="themeColorMeta">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,7 +29,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 </head>
 <body><div class="app">
 <header><div><h1>Macros</h1><div class="date" id="dateLabel"></div></div><button class="settings-icon" aria-label="Settings" title="Settings" onclick="goToPage('settings',this)">⚙</button></header>
-<section id="today" class="page active"><div class="card"><div class="kcal"><strong id="kcalNow">0</strong><span>of <span id="kcalGoal">2000</span> kcal</span></div><div class="macro"><b>Protein</b><div class="bar"><div id="pbar" class="fill p"></div></div><div class="right" id="ptxt"></div></div><div class="macro"><b>Carbs</b><div class="bar"><div id="cbar" class="fill c"></div></div><div class="right" id="ctxt"></div></div><div class="macro"><b>Fat</b><div class="bar"><div id="fbar" class="fill f"></div></div><div class="right" id="ftxt"></div></div><div class="microgrid"><div class="microbox"><b id="fiberNow">—</b><span>Fiber</span></div><div class="microbox"><b id="sugarNow">—</b><span>Sugars</span></div><div class="microbox"><b id="satNow">—</b><span>Saturated fat</span></div><div class="microbox"><b id="unsatNow">—</b><span>Unsaturated fat*</span></div></div></div><div class="section-title">TODAY</div><div class="card" id="todayEntries"></div><button class="fab" onclick="openFoodPicker()">+</button></section>
+<section id="today" class="page active"><div class="card"><div class="kcal"><strong id="kcalNow">0</strong><span>of <span id="kcalGoal">2000</span> kcal</span></div><div class="macro"><b>Protein</b><div class="bar"><div id="pbar" class="fill p"></div></div><div class="right" id="ptxt"></div></div><div class="macro"><b>Carbs</b><div class="bar"><div id="cbar" class="fill c"></div></div><div class="right" id="ctxt"></div></div><div class="macro"><b>Fat</b><div class="bar"><div id="fbar" class="fill f"></div></div><div class="right" id="ftxt"></div></div><div class="microgrid"><div class="microbox"><b id="fiberNow">—</b><span>Fiber</span></div><div class="microbox"><b id="sugarNow">—</b><span>Sugars</span></div><div class="microbox"><b id="satNow">—</b><span>Saturated fat</span></div><div class="microbox"><b id="unsatNow">—</b><span>Unsaturated fat*</span></div></div></div><div class="section-title">QUICK ENTRY</div><div class="card quick-entry"><div class="quick-row"><input id="quickEntryInput" placeholder="e.g. 200g chicken, 150g rice + 10g olive oil"><button onclick="parseQuickEntry()">Parse</button></div><div class="note" style="margin-top:8px">Uses your Food Library locally. Nothing is sent anywhere.</div><div id="quickEntryStatus"></div></div><div class="section-title">TODAY</div><div class="card" id="todayEntries"></div><button class="fab" onclick="openFoodPicker()">+</button></section>
 <section id="history" class="page"><div class="section-title">HISTORY</div><div class="periods"><button class="active" data-days="7">7D</button><button data-days="30">30D</button><button data-days="90">90D</button><button data-days="all">ALL</button></div><div class="modes"><button class="active" data-mode="daily">Daily</button><button data-mode="weekly">Weekly avg</button><button data-mode="monthly">Monthly avg</button></div><div class="series"><button class="active" data-series="kcal">Calories</button><button data-series="p">Protein</button><button data-series="c">Carbs</button><button data-series="f">Fat</button><button data-series="fiber">Fiber</button><button data-series="sugar">Sugar</button></div><div class="card"><div class="historyhead"><span id="chartTitle">Daily intake</span><span id="chartPeriod" class="sub"></span></div><div class="chartwrap"><svg id="historyChart" class="chart" viewBox="0 0 500 210" preserveAspectRatio="none"></svg></div><div class="axislegend"><span>← kcal</span><span>grams →</span></div></div><div class="card"><div class="historyhead"><span>Daily averages</span><span id="avgDays" class="sub"></span></div><div class="avggrid" id="avgGrid" style="margin-top:12px"></div></div><div class="section-title">DAYS</div><div id="historyList"></div></section>
 
 <section id="meals" class="page">
@@ -109,6 +114,50 @@ function updateEntryPreview(){let e=data.entries.find(x=>x.id===editingEntryId),
 function saveEntryEdit(){let e=data.entries.find(x=>x.id===editingEntryId),amount=+editEntryAmount.value,b=e&&entryBasis(e);if(!e||!b||amount<=0)return alert('Enter a valid amount.');let q=amount/100;e.amount=fmt(amount);['kcal','p','c','f','fiber','sugar','sat','mono','poly'].forEach(k=>e[k]=val(b[k])===null?null:b[k]*q);e.per100=b;e.mealType=editEntryMealType.value;e.mealId='meal-'+e.date+'-'+e.mealType.toLowerCase();save();closeModal('editEntryModal');render()}
 function deleteEditingEntry(){if(!editingEntryId)return;if(!confirm('Delete this diary entry?'))return;removeEntry(editingEntryId);editingEntryId=null;closeModal('editEntryModal')}
 
+
+function normFoodName(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function editDistance(a,b){let m=a.length,n=b.length,prev=Array(n+1).fill(0).map((_,i)=>i);for(let i=1;i<=m;i++){let cur=[i];for(let j=1;j<=n;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur}return prev[n]}
+function foodMatchScore(query,name){
+ let q=normFoodName(query),n=normFoodName(name);if(!q||!n)return 0;if(q===n)return 1;
+ let qw=q.split(' '),nw=n.split(' ');
+ if(nw.includes(q)||qw.every(w=>nw.some(x=>x===w)))return .94;
+ if(n.includes(q)||q.includes(n))return .90;
+ let tokenHits=qw.filter(w=>nw.some(x=>x.startsWith(w)||w.startsWith(x))).length/Math.max(qw.length,1);
+ let lev=1-editDistance(q,n)/Math.max(q.length,n.length,1);
+ return Math.max(tokenHits*.82,lev*.78)
+}
+function bestFoodMatch(query){
+ let ranked=data.foods.map(f=>({food:f,score:foodMatchScore(query,f.name)})).sort((a,b)=>b.score-a.score);
+ return ranked[0]||null
+}
+function splitQuickEntry(text){
+ return text.replace(/\s+(?:and|&)\s+/gi,',').split(/[,+;\n]+/).map(x=>x.trim()).filter(Boolean)
+}
+function parseFoodPart(part){
+ let s=part.trim(),m,amount=null,unit='g',name='';
+ m=s.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|grams?|kilograms?)\b\s*(?:of\s+)?(.+)$/i);
+ if(m){amount=parseFloat(m[1].replace(',','.'));unit=m[2].toLowerCase();name=m[3].trim()}
+ else {
+   m=s.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(kg|g|grams?|kilograms?)$/i);
+   if(m){name=m[1].trim();amount=parseFloat(m[2].replace(',','.'));unit=m[3].toLowerCase()}
+ }
+ if(amount!==null&&(unit.startsWith('kg')||unit.startsWith('kilo')))amount*=1000;
+ if(amount===null)return {raw:part,error:'Add a weight in g or kg.'};
+ let match=bestFoodMatch(name);
+ if(!match||match.score<.52)return {raw:part,name,amount,error:'No confident Food Library match.'};
+ return {raw:part,name,amount,food:match.food,score:match.score}
+}
+function parseQuickEntry(){
+ let input=document.getElementById('quickEntryInput'),status=document.getElementById('quickEntryStatus'),text=input.value.trim();
+ if(!text){status.innerHTML='<div class="parse-warn">Type at least one food with a weight.</div>';return}
+ let results=splitQuickEntry(text).map(parseFoodPart),ok=results.filter(x=>x.food),bad=results.filter(x=>!x.food);
+ status.innerHTML=`<div class="parse-results">${ok.map(x=>`<div class="parse-result"><div><b>${esc(x.food.name)}</b><div class="match-note">${esc(x.raw)}${x.score<.9?' · check match':''}</div></div><span>${fmt(x.amount)} g</span></div>`).join('')}</div>${bad.length?`<div class="parse-warn"><b>Needs attention</b><div class="sub">${bad.map(x=>esc(x.raw)+' — '+esc(x.error)).join('<br>')}</div></div>`:''}${ok.length?'<button class="wide" style="margin-top:10px" onclick="reviewParsedMeal()">Review meal</button>':''}`;
+ window._quickParsed=results
+}
+function reviewParsedMeal(){
+ let results=(window._quickParsed||[]).filter(x=>x.food);if(!results.length)return;
+ editingMealId=null;mealDraft=results.map(x=>foodSnapshot(x.food,x.amount));mealName.value='';mealType.value=lastMealType();mealModalTitle.textContent='Review quick entry';deleteMealBtn.style.display='none';saveMealTemplateBtn.style.display='inline-block';populateMealFoodSelect();renderMealDraft();mealModal.classList.add('show')
+}
 function lastMealType(){
  let es=data.entries.filter(e=>e.date===localDate()).sort((a,b)=>(b.time||'').localeCompare(a.time||''));
  return es[0]?.mealType||'Breakfast'
@@ -144,7 +193,7 @@ function importData(file){let r=new FileReader();r.onload=()=>{try{let x=JSON.pa
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function goToPage(page,source=null){document.querySelectorAll('.nav button,.page').forEach(x=>x.classList.remove('active'));let p=document.getElementById(page);if(p)p.classList.add('active');let nb=document.querySelector(`.nav button[data-page="${page}"]`);if(nb)nb.classList.add('active');render();window.scrollTo({top:0,behavior:'smooth'})}
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>goToPage(b.dataset.page,b));foodSearch.oninput=e=>renderFoods(e.target.value);pickerSearch.oninput=renderPicker;amountInput.oninput=updatePreview;editEntryAmount.oninput=updateEntryPreview;importFile.onchange=e=>e.target.files[0]&&importData(e.target.files[0]);document.querySelectorAll('.periods button').forEach(b=>b.onclick=()=>{historyDays=b.dataset.days==='all'?'all':+b.dataset.days;document.querySelectorAll('.periods button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{historyMode=b.dataset.mode;document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.series button').forEach(b=>b.onclick=()=>{let k=b.dataset.series;historySeries.has(k)?historySeries.delete(k):historySeries.add(k);b.classList.toggle('active',historySeries.has(k));renderHistory()});document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));render();
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>goToPage(b.dataset.page,b));foodSearch.oninput=e=>renderFoods(e.target.value);pickerSearch.oninput=renderPicker;quickEntryInput.addEventListener('keydown',e=>{if(e.key==='Enter')parseQuickEntry()});amountInput.oninput=updatePreview;editEntryAmount.oninput=updateEntryPreview;importFile.onchange=e=>e.target.files[0]&&importData(e.target.files[0]);document.querySelectorAll('.periods button').forEach(b=>b.onclick=()=>{historyDays=b.dataset.days==='all'?'all':+b.dataset.days;document.querySelectorAll('.periods button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{historyMode=b.dataset.mode;document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.series button').forEach(b=>b.onclick=()=>{let k=b.dataset.series;historySeries.has(k)?historySeries.delete(k):historySeries.add(k);b.classList.toggle('active',historySeries.has(k));renderHistory()});document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));render();
 </script><script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js'));
