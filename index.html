@@ -16,7 +16,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 
 .quick-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 .quick-row input{min-width:0}
-.parse-results{margin-top:12px}.parse-result{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}.parse-result:first-child{border-top:0}.parse-warn{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px}.match-note{font-size:11px;opacity:.72}
+.parse-results{margin-top:12px}.parse-result{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}.parse-result:first-child{border-top:0}.parse-warn{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px}.match-note{font-size:11px;opacity:.72}.parse-ambiguity{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px}.parse-ambiguity b{display:block;margin-bottom:3px}.parse-choices{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.parse-choices button{padding:7px 9px;border-radius:9px;font-size:12px}
 @media(max-width:390px){.quick-row{grid-template-columns:1fr}.quick-row button{width:100%}}
 </style>
 <meta name="theme-color" content="#0B0B0D" id="themeColorMeta">
@@ -210,10 +210,13 @@ function foodMatchScore(query,name){
  let lev=1-editDistance(q,n)/Math.max(q.length,n.length,1);
  return Math.max(tokenHits*.82,lev*.78)
 }
-function bestFoodMatch(query){
- let ranked=data.foods.map(f=>({food:f,score:Math.max(foodMatchScore(query,f.name),...(f.aliases||[]).map(a=>foodMatchScore(query,a)))})).sort((a,b)=>b.score-a.score);
- return ranked[0]||null
+function rankedFoodMatches(query){
+ return data.foods.map(f=>({
+   food:f,
+   score:Math.max(foodMatchScore(query,f.name),...(f.aliases||[]).map(a=>foodMatchScore(query,a)))
+ })).sort((a,b)=>b.score-a.score)
 }
+function bestFoodMatch(query){return rankedFoodMatches(query)[0]||null}
 function splitQuickEntry(text){
  return text.replace(/\s+(?:and|&)\s+/gi,',').split(/[,+;\n]+/).map(x=>x.trim()).filter(Boolean)
 }
@@ -227,16 +230,57 @@ function parseFoodPart(part){
  }
  if(amount!==null&&(unit.startsWith('kg')||unit.startsWith('kilo')))amount*=1000;
  if(amount===null)return {raw:part,error:'Add a weight in g or kg.'};
- let match=bestFoodMatch(name);
- if(!match||match.score<.52)return {raw:part,name,amount,error:'No confident Food Library match.'};
- return {raw:part,name,amount,food:match.food,score:match.score}
+
+ let ranked=rankedFoodMatches(name),top=ranked[0];
+ if(!top||top.score<.52)return {raw:part,name,amount,error:'No confident Food Library match.'};
+
+ let second=ranked[1],uniqueExact=top.score===1&&(!second||second.score<1);
+ let candidates=ranked
+   .filter(x=>x.score>=.70&&top.score-x.score<=.05)
+   .slice(0,4);
+
+ if(!uniqueExact&&candidates.length>1){
+   return {raw:part,name,amount,ambiguous:true,candidates,score:top.score}
+ }
+ return {raw:part,name,amount,food:top.food,score:top.score}
+}
+function renderQuickParseResults(){
+ let status=document.getElementById('quickEntryStatus'),results=window._quickParsed||[],
+     ok=results.filter(x=>x.food),
+     ambiguous=results.map((x,i)=>({x,i})).filter(o=>o.x.ambiguous&&!o.x.food),
+     bad=results.filter(x=>!x.food&&!x.ambiguous);
+
+ let matched=`<div class="parse-results">${ok.map(x=>`<div class="parse-result"><div><b>${esc(x.food.name)}</b><div class="match-note">${esc(x.raw)}${x.score<.9?' · check match':''}</div></div><span>${fmt(x.amount)} g</span></div>`).join('')}</div>`;
+
+ let questions=ambiguous.map(({x,i})=>`
+   <div class="parse-ambiguity">
+     <b>Which one did you mean?</b>
+     <div class="sub">${esc(x.raw)} · ${fmt(x.amount)} g</div>
+     <div class="parse-choices">
+       ${x.candidates.map(c=>`<button type="button" onclick="chooseQuickMatch(${i},'${c.food.id}')">${esc(c.food.name)}</button>`).join('')}
+     </div>
+   </div>`).join('');
+
+ let warnings=bad.length?`<div class="parse-warn"><b>Needs attention</b><div class="sub">${bad.map(x=>esc(x.raw)+' — '+esc(x.error)).join('<br>')}</div></div>`:'';
+ let review=ok.length&&!ambiguous.length?'<button class="wide" style="margin-top:10px" onclick="reviewParsedMeal()">Review meal</button>':'';
+
+ status.innerHTML=matched+questions+warnings+review
+}
+function chooseQuickMatch(index,foodId){
+ let results=window._quickParsed||[],item=results[index],food=data.foods.find(f=>f.id===foodId);
+ if(!item||!food)return;
+ item.food=food;
+ item.ambiguous=false;
+ item.score=1;
+ delete item.candidates;
+ window._quickParsed=results;
+ renderQuickParseResults()
 }
 function parseQuickEntry(){
  let input=document.getElementById('quickEntryInput'),status=document.getElementById('quickEntryStatus'),text=input.value.trim();
  if(!text){status.innerHTML='<div class="parse-warn">Type at least one food with a weight.</div>';return}
- let results=splitQuickEntry(text).map(parseFoodPart),ok=results.filter(x=>x.food),bad=results.filter(x=>!x.food);
- status.innerHTML=`<div class="parse-results">${ok.map(x=>`<div class="parse-result"><div><b>${esc(x.food.name)}</b><div class="match-note">${esc(x.raw)}${x.score<.9?' · check match':''}</div></div><span>${fmt(x.amount)} g</span></div>`).join('')}</div>${bad.length?`<div class="parse-warn"><b>Needs attention</b><div class="sub">${bad.map(x=>esc(x.raw)+' — '+esc(x.error)).join('<br>')}</div></div>`:''}${ok.length?'<button class="wide" style="margin-top:10px" onclick="reviewParsedMeal()">Review meal</button>':''}`;
- window._quickParsed=results
+ window._quickParsed=splitQuickEntry(text).map(parseFoodPart);
+ renderQuickParseResults()
 }
 function reviewParsedMeal(){
  let results=(window._quickParsed||[]).filter(x=>x.food);if(!results.length)return;
