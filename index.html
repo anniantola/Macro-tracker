@@ -63,14 +63,36 @@ const starterFoods=[{"id":"basic-0","name":"Rice, white","kcal":365,"p":7.1,"c":
 let data=load(),selectedFood=null,newFoodThenAdd=false,editingFoodId=null,editingEntryId=null,historyDays=7,historyMode="daily",historySeries=new Set(["kcal"]); migrate();
 function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x)return x}catch(e){}return{foods:starterFoods,entries:[],meals:[],goals:{kcal:2000,p:120,c:200,f:70},dark:matchMedia('(prefers-color-scheme: dark)').matches}}
 function migrate(){
- if(!Array.isArray(data.foods))data.foods=[];if(!Array.isArray(data.meals))data.meals=[];
+ if(!Array.isArray(data.foods))data.foods=[];if(!Array.isArray(data.meals))data.meals=[];if(!Array.isArray(data.entries))data.entries=[];
+ if(!Array.isArray(data.deletedFoodIds))data.deletedFoodIds=[];
  data.foods.forEach(f=>['fiber','sugar','sat','mono','poly'].forEach(k=>{if(!(k in f))f[k]=null}));
- // Presets are seeded only when missing. Once stored, the JSON/local state is authoritative and editable.
+ // Remove obsolete legacy presets once.
  if(!data.basicLibraryV2){
    data.foods=data.foods.filter(f=>!/^starter-\d+$/.test(f.id));
    data.basicLibraryV2=true;
  }
- starterFoods.forEach(p=>{if(!data.foods.some(f=>f.id===p.id))data.foods.push({...p})});
+ // Seed the basic library only once. After this, the stored library is authoritative:
+ // deleting a preset must not cause it to reappear on the next launch.
+ if(!data.basicLibrarySeeded){
+   starterFoods.forEach(p=>{
+     if(!data.deletedFoodIds.includes(p.id)&&!data.foods.some(f=>f.id===p.id))data.foods.push({...p})
+   });
+   data.basicLibrarySeeded=true;
+ }
+ // Repair duplicates left by earlier migrations. IDs are always unique; for built-in
+ // presets, duplicate normalized names are also collapsed. Custom foods are preserved.
+ let seenIds=new Set(),seenPresetNames=new Set();
+ data.foods=data.foods.filter(f=>{
+   if(!f||!f.id||seenIds.has(f.id))return false;
+   seenIds.add(f.id);
+   let isPreset=f.source==='generic-basic'||/^basic-\d+$/.test(f.id);
+   if(isPreset){
+     let n=(f.name||'').trim().toLowerCase().replace(/\s+/g,' ');
+     if(seenPresetNames.has(n))return false;
+     seenPresetNames.add(n);
+   }
+   return true;
+ });
  data.entries.forEach(e=>{if(!e.mealType)e.mealType='Snack';if(!e.mealId)e.mealId='legacy-'+e.date+'-'+(e.time||'');['fiber','sugar','sat','mono','poly'].forEach(k=>{if(!(k in e))e[k]=null});if(!e.per100&&+e.amount>0){let q=+e.amount/100;e.per100={kcal:e.kcal/q,p:e.p/q,c:e.c/q,f:e.f/q,fiber:val(e.fiber)===null?null:e.fiber/q,sugar:val(e.sugar)===null?null:e.sugar/q,sat:val(e.sat)===null?null:e.sat/q,mono:val(e.mono)===null?null:e.mono/q,poly:val(e.poly)===null?null:e.poly/q}}});
  save();
 }
@@ -104,7 +126,7 @@ function fillFoodEditor(f){nfName.value=f.name;nfKcal.value=f.kcal;nfP.value=f.p
 function openNewFood(andAdd=false){newFoodThenAdd=andAdd;editingFoodId=null;clearFoodEditor();foodEditorTitle.textContent='New food';deleteFoodBtn.style.display='none';closeModal('pickerModal');newFoodModal.classList.add('show');setTimeout(()=>nfName.focus(),100)}
 function openFoodEditor(id){let f=data.foods.find(x=>x.id===id);if(!f)return;editingFoodId=id;newFoodThenAdd=false;fillFoodEditor(f);foodEditorTitle.textContent='Edit food';deleteFoodBtn.style.display='block';newFoodModal.classList.add('show');setTimeout(()=>nfName.focus(),100)}
 function saveFoodEditor(){let opt=id=>document.getElementById(id).value.trim()===''?null:+document.getElementById(id).value;let values={name:nfName.value.trim(),kcal:+nfKcal.value,p:+nfP.value,c:+nfC.value,f:+nfF.value,fiber:opt('nfFiber'),sugar:opt('nfSugar'),sat:opt('nfSat'),mono:opt('nfMono'),poly:opt('nfPoly')};if(!values.name||[values.kcal,values.p,values.c,values.f].some(Number.isNaN))return alert('Please fill in all values.');if(editingFoodId){let f=data.foods.find(x=>x.id===editingFoodId);if(!f)return;Object.assign(f,values);save();closeModal('newFoodModal');render()}else{let f={id:'custom-'+Date.now(),...values,custom:true};data.foods.push(f);save();closeModal('newFoodModal');render();if(newFoodThenAdd)chooseFood(f.id)}}
-function deleteEditingFood(){if(!editingFoodId)return;if(!confirm('Delete this food from your library? Existing diary entries will stay.'))return;data.foods=data.foods.filter(f=>f.id!==editingFoodId);editingFoodId=null;save();closeModal('newFoodModal');render()}
+function deleteEditingFood(){if(!editingFoodId)return;if(!confirm('Delete this food from your library? Existing diary entries will stay.'))return;let f=data.foods.find(x=>x.id===editingFoodId);if(f&&(f.source==='generic-basic'||/^basic-\d+$/.test(f.id))){if(!Array.isArray(data.deletedFoodIds))data.deletedFoodIds=[];if(!data.deletedFoodIds.includes(f.id))data.deletedFoodIds.push(f.id)}data.foods=data.foods.filter(f=>f.id!==editingFoodId);editingFoodId=null;save();closeModal('newFoodModal');render()}
 function removeEntry(id){data.entries=data.entries.filter(e=>e.id!==id);save();render()}
 function entryBasis(e){if(e.per100)return e.per100;let q=(+e.amount||0)/100;if(!q)return null;return{kcal:e.kcal/q,p:e.p/q,c:e.c/q,f:e.f/q,fiber:val(e.fiber)===null?null:e.fiber/q,sugar:val(e.sugar)===null?null:e.sugar/q,sat:val(e.sat)===null?null:e.sat/q,mono:val(e.mono)===null?null:e.mono/q,poly:val(e.poly)===null?null:e.poly/q}}
 function openEntryEditor(id){let e=data.entries.find(x=>x.id===id);if(!e)return;editingEntryId=id;editEntryTitle.textContent=e.name;editEntryAmount.value=e.amount;editEntryMealType.value=e.mealType||'Snack';updateEntryPreview();editEntryModal.classList.add('show');setTimeout(()=>editEntryAmount.select(),100)}
@@ -190,8 +212,8 @@ function exportData(){let a=document.createElement('a');a.href=URL.createObjectU
 function importData(file){let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.foods||!x.entries||!x.goals)throw 0;if(confirm('Replace current tracker data with this backup?')){data=x;migrate();render()}}catch(e){alert('That file does not look like a valid Macro Tracker backup.')}};r.readAsText(file)}
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function goToPage(page,source=null){document.querySelectorAll('.nav button,.page').forEach(x=>x.classList.remove('active'));let p=document.getElementById(page);if(p)p.classList.add('active');let nb=document.querySelector(`.nav button[data-page="${page}"]`);if(nb)nb.classList.add('active');render();window.scrollTo({top:0,behavior:'smooth'})}
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>goToPage(b.dataset.page,b));foodSearch.oninput=e=>renderFoods(e.target.value);pickerSearch.oninput=renderPicker;quickEntryInput.addEventListener('keydown',e=>{if(e.key==='Enter')parseQuickEntry()});amountInput.oninput=updatePreview;editEntryAmount.oninput=updateEntryPreview;importFile.onchange=e=>e.target.files[0]&&importData(e.target.files[0]);document.querySelectorAll('.periods button').forEach(b=>b.onclick=()=>{historyDays=b.dataset.days==='all'?'all':+b.dataset.days;document.querySelectorAll('.periods button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{historyMode=b.dataset.mode;document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.series button').forEach(b=>b.onclick=()=>{let k=b.dataset.series;historySeries.has(k)?historySeries.delete(k):historySeries.add(k);b.classList.toggle('active',historySeries.has(k));renderHistory()});document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));render();
+function goToPage(page,source=null,remember=true){if(!document.getElementById(page))page='today';document.querySelectorAll('.nav button,.page').forEach(x=>x.classList.remove('active'));let p=document.getElementById(page);if(p)p.classList.add('active');let nb=document.querySelector(`.nav button[data-page="${page}"]`);if(nb)nb.classList.add('active');if(remember)localStorage.setItem('macroTrackerCurrentPage',page);render();window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>goToPage(b.dataset.page,b));foodSearch.oninput=e=>renderFoods(e.target.value);pickerSearch.oninput=renderPicker;quickEntryInput.addEventListener('keydown',e=>{if(e.key==='Enter')parseQuickEntry()});amountInput.oninput=updatePreview;editEntryAmount.oninput=updateEntryPreview;importFile.onchange=e=>e.target.files[0]&&importData(e.target.files[0]);document.querySelectorAll('.periods button').forEach(b=>b.onclick=()=>{historyDays=b.dataset.days==='all'?'all':+b.dataset.days;document.querySelectorAll('.periods button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{historyMode=b.dataset.mode;document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.series button').forEach(b=>b.onclick=()=>{let k=b.dataset.series;historySeries.has(k)?historySeries.delete(k):historySeries.add(k);b.classList.toggle('active',historySeries.has(k));renderHistory()});document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));let initialPage=localStorage.getItem('macroTrackerCurrentPage')||'today';goToPage(initialPage,null,false);
 </script><script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js'));
