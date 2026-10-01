@@ -265,7 +265,7 @@ function splitQuickEntry(text){
  return text.replace(/\s+(?:and|&)\s+/gi,',').split(/[,+;\n]+/).map(x=>x.trim()).filter(Boolean)
 }
 function parseFoodPart(part){
- let s=part.trim(),m,amount=null,unit='g',name='';
+ let s=part.trim(),m,amount=null,unit='g',name=s;
  m=s.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|grams?|kilograms?)\b\s*(?:of\s+)?(.+)$/i);
  if(m){amount=parseFloat(m[1].replace(',','.'));unit=m[2].toLowerCase();name=m[3].trim()}
  else {
@@ -273,7 +273,6 @@ function parseFoodPart(part){
    if(m){name=m[1].trim();amount=parseFloat(m[2].replace(',','.'));unit=m[3].toLowerCase()}
  }
  if(amount!==null&&(unit.startsWith('kg')||unit.startsWith('kilo')))amount*=1000;
- if(amount===null)return {raw:part,error:'Add a weight in g or kg.'};
 
  let ranked=rankedFoodMatches(name),top=ranked[0];
  if(!top||top.score<.52)return {raw:part,name,amount,error:'No confident Food Library match.'};
@@ -292,27 +291,60 @@ function parseFoodPart(part){
  }
  return {raw:part,name,amount,food:top.food,score:top.score}
 }
+function suggestedServings(food){
+ let n=normFoodName(food.name),opts;
+ if(/\b(wine|rose|rose|sparkling|vermouth)\b/.test(n))opts=[100,150];
+ else if(/\b(beer|lager|cider)\b/.test(n))opts=[330,500];
+ else if(/\b(vodka|gin|whisky|whiskey|rum|liqueur)\b/.test(n))opts=[40,50];
+ else if(/\begg\b/.test(n))opts=[60,120];
+ else if(/\b(oil|butter)\b/.test(n))opts=[5,10,15];
+ else if(/\b(tomato paste|concentrato)\b/.test(n))opts=[15,30,50];
+ else if(/\b(cream|creme fraiche|sour cream|smetana|mascarpone)\b/.test(n))opts=[30,50,100];
+ else if(/\b(cheese|mozzarella|feta|ricotta|burrata|parmesan|pecorino|grana|gouda|edam|halloumi|brie|camembert)\b/.test(n))opts=[20,30,50];
+ else if(/\b(nut|nuts|almond|cashew|walnut|hazelnut|pistachio|pecan|macadamia|peanut|seed|seeds|chia|flax|sesame|hemp|poppy|pine)\b/.test(n))opts=[20,30,50];
+ else if(/\b(bread|crispbread|ciabatta|focaccia|sourdough)\b/.test(n))opts=[30,60,100];
+ else if(/\b(yogurt|yoghurt|quark|cottage cheese)\b/.test(n))opts=[150,200,250];
+ else if(/\b(pasta|rice|couscous|bulgur|quinoa|barley|rye|wheat|semolina|polenta|flour|oats)\b/.test(n))opts=[75,100,150];
+ else if(/\b(chicken|turkey|beef|pork|lamb|salmon|trout|cod|pollock|tuna|shrimp|mussels|anchovies)\b/.test(n))opts=[100,150,200];
+ else if(/\b(apple|banana|orange|mandarin|pear|peach|nectarine|plum|grape|kiwi|mango|pineapple|watermelon|melon|lemon|lime|strawberr|raspberr|blackberr|blueberr|bilberr|lingonberr|currant|cloudberr|cranberr|apricot|cherr|grapefruit|pomegranate|persimmon|fig|date|raisin)\b/.test(n))opts=[100,150,200];
+ else opts=[100,150,200];
+ return opts
+}
 function renderQuickParseResults(){
  let status=document.getElementById('quickEntryStatus'),results=window._quickParsed||[],
-     ok=results.filter(x=>x.food),
+     ready=results.filter(x=>x.food&&x.amount!==null&&x.amount>0),
+     waitingAmount=results.map((x,i)=>({x,i})).filter(o=>o.x.food&&(o.x.amount===null||o.x.amount<=0)),
      ambiguous=results.map((x,i)=>({x,i})).filter(o=>o.x.ambiguous&&!o.x.food),
      bad=results.filter(x=>!x.food&&!x.ambiguous);
 
- let matched=`<div class="parse-results">${ok.map(x=>`<div class="parse-result"><div><b>${esc(x.food.name)}</b><div class="match-note">${esc(x.raw)}${x.score<.9?' · check match':''}</div></div><span>${fmt(x.amount)} g</span></div>`).join('')}</div>`;
+ let matched=`<div class="parse-results">${ready.map(x=>`<div class="parse-result"><div><b>${esc(x.food.name)}</b><div class="match-note">${esc(x.raw)}${x.score<.9?' · check match':''}</div></div><span>${fmt(x.amount)} g</span></div>`).join('')}</div>`;
 
  let questions=ambiguous.map(({x,i})=>`
    <div class="parse-ambiguity">
      <b>Which one did you mean?</b>
-     <div class="sub">${esc(x.raw)} · ${fmt(x.amount)} g</div>
+     <div class="sub">${esc(x.raw)}${x.amount!==null?' · '+fmt(x.amount)+' g':''}</div>
      <div class="parse-choices">
        ${x.candidates.map(c=>`<button type="button" onclick="chooseQuickMatch(${i},'${c.food.id}')">${esc(c.food.name)}</button>`).join('')}
      </div>
    </div>`).join('');
 
- let warnings=bad.length?`<div class="parse-warn"><b>Needs attention</b><div class="sub">${bad.map(x=>esc(x.raw)+' — '+esc(x.error)).join('<br>')}</div></div>`:'';
- let review=ok.length&&!ambiguous.length?'<button class="wide" style="margin-top:10px" onclick="reviewParsedMeal()">Review meal</button>':'';
+ let portions=waitingAmount.map(({x,i})=>{
+   let opts=suggestedServings(x.food);
+   return `<div class="parse-ambiguity">
+     <b>How much ${esc(x.food.name)}?</b>
+     <div class="sub">No amount was given. Choose a suggested serving or enter your own.</div>
+     <div class="parse-choices">
+       ${opts.map(g=>`<button type="button" onclick="chooseQuickAmount(${i},${g})">${g} g</button>`).join('')}
+       <button type="button" onclick="customQuickAmount(${i})">Custom…</button>
+     </div>
+   </div>`
+ }).join('');
 
- status.innerHTML=matched+questions+warnings+review
+ let warnings=bad.length?`<div class="parse-warn"><b>Needs attention</b><div class="sub">${bad.map(x=>esc(x.raw)+' — '+esc(x.error)).join('<br>')}</div></div>`:'';
+ let unresolved=ambiguous.length+waitingAmount.length+bad.length;
+ let review=ready.length&&!unresolved?'<button class="wide" style="margin-top:10px" onclick="reviewParsedMeal()">Review meal</button>':'';
+
+ status.innerHTML=matched+questions+portions+warnings+review
 }
 function chooseQuickMatch(index,foodId){
  let results=window._quickParsed||[],item=results[index],food=data.foods.find(f=>f.id===foodId);
@@ -324,14 +356,28 @@ function chooseQuickMatch(index,foodId){
  window._quickParsed=results;
  renderQuickParseResults()
 }
+function chooseQuickAmount(index,amount){
+ let results=window._quickParsed||[],item=results[index],g=+amount;
+ if(!item||!Number.isFinite(g)||g<=0)return;
+ item.amount=g;
+ window._quickParsed=results;
+ renderQuickParseResults()
+}
+function customQuickAmount(index){
+ let raw=prompt('Amount in grams:');
+ if(raw===null)return;
+ let g=parseFloat(String(raw).replace(',','.'));
+ if(!Number.isFinite(g)||g<=0){alert('Please enter a positive amount in grams.');return}
+ chooseQuickAmount(index,g)
+}
 function parseQuickEntry(){
  let input=document.getElementById('quickEntryInput'),status=document.getElementById('quickEntryStatus'),text=input.value.trim();
- if(!text){status.innerHTML='<div class="parse-warn">Type at least one food with a weight.</div>';return}
+ if(!text){status.innerHTML='<div class="parse-warn">Type at least one food.</div>';return}
  window._quickParsed=splitQuickEntry(text).map(parseFoodPart);
  renderQuickParseResults()
 }
 function reviewParsedMeal(){
- let results=(window._quickParsed||[]).filter(x=>x.food);if(!results.length)return;
+ let results=(window._quickParsed||[]).filter(x=>x.food&&x.amount!==null&&x.amount>0);if(!results.length)return;
  editingMealId=null;mealDraft=results.map(x=>foodSnapshot(x.food,x.amount));mealName.value='';mealType.value=lastMealType();mealModalTitle.textContent='Review quick entry';deleteMealBtn.style.display='none';saveMealTemplateBtn.style.display='inline-block';populateMealFoodSelect();renderMealDraft();mealModal.classList.add('show')
 }
 function lastMealType(){
