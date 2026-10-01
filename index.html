@@ -201,14 +201,55 @@ function deleteEditingEntry(){if(!editingEntryId)return;if(!confirm('Delete this
 
 function normFoodName(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
 function editDistance(a,b){let m=a.length,n=b.length,prev=Array(n+1).fill(0).map((_,i)=>i);for(let i=1;i<=m;i++){let cur=[i];for(let j=1;j<=n;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur}return prev[n]}
+function tokenForms(w){
+ let out=new Set([w]);
+ if(w.length>3&&w.endsWith('ies'))out.add(w.slice(0,-3)+'y');
+ if(w.length>4&&w.endsWith('oes'))out.add(w.slice(0,-2));
+ if(w.length>4&&w.endsWith('sses'))out.add(w.slice(0,-2));
+ if(w.length>3&&w.endsWith('s')&&!w.endsWith('ss'))out.add(w.slice(0,-1));
+ return out
+}
+function exactTokenMatch(a,b){
+ let af=tokenForms(a),bf=tokenForms(b);
+ for(let x of af)if(bf.has(x))return true;
+ return false
+}
+function tokenMatchScore(a,b){
+ if(exactTokenMatch(a,b))return 1;
+ // Short tokens must match exactly/stem-equivalently. This prevents pea→pear and rum→breadcrumbs.
+ if(a.length<4||b.length<4)return 0;
+ // Typo tolerance only for genuinely close, similarly sized words.
+ if(Math.abs(a.length-b.length)>2||a[0]!==b[0])return 0;
+ let d=editDistance(a,b),sim=1-d/Math.max(a.length,b.length);
+ if(d===1&&sim>=.75)return .88;
+ if(d===2&&Math.min(a.length,b.length)>=7&&sim>=.75)return .78;
+ return 0
+}
 function foodMatchScore(query,name){
- let q=normFoodName(query),n=normFoodName(name);if(!q||!n)return 0;if(q===n)return 1;
- let qw=q.split(' '),nw=n.split(' ');
- if(nw.includes(q)||qw.every(w=>nw.some(x=>x===w)))return .94;
- if(n.includes(q)||q.includes(n))return .90;
- let tokenHits=qw.filter(w=>nw.some(x=>x.startsWith(w)||w.startsWith(x))).length/Math.max(qw.length,1);
- let lev=1-editDistance(q,n)/Math.max(q.length,n.length,1);
- return Math.max(tokenHits*.82,lev*.78)
+ let q=normFoodName(query),n=normFoodName(name);
+ if(!q||!n)return 0;
+ if(q===n)return 1;
+
+ let qw=q.split(' ').filter(Boolean),nw=n.split(' ').filter(Boolean),
+     qNums=qw.filter(w=>/^\d+(?:\.\d+)?$/.test(w)),
+     nNums=nw.filter(w=>/^\d+(?:\.\d+)?$/.test(w));
+
+ // Explicit numbers (ABV, fat %, etc.) are constraints rather than fuzzy hints.
+ if(qNums.length&&!qNums.every(x=>nNums.includes(x)))return .15;
+
+ let perToken=qw.map(w=>Math.max(0,...nw.map(x=>tokenMatchScore(w,x)))),
+     coverage=perToken.reduce((a,b)=>a+b,0)/Math.max(1,perToken.length),
+     strong=perToken.every(x=>x>=.88);
+
+ if(strong){
+   // All requested concepts are present; extra descriptors are allowed but reduce confidence slightly.
+   let extras=Math.max(0,nw.length-qw.length);
+   return Math.max(.90,.97-Math.min(.06,extras*.015))
+ }
+
+ // Partial matches remain possible for typo recovery, but cannot beat a complete token match.
+ if(coverage>=.75)return coverage*.86;
+ return coverage*.70
 }
 function rankedFoodMatches(query){
  let q=normFoodName(query),qWords=q.split(' ');
