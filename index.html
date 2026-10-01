@@ -141,7 +141,45 @@ function historyDates(){let first=data.entries.length?[...data.entries].map(e=>e
 function renderHistory(){let dates=historyDates(),logged=dates.filter(d=>data.entries.some(e=>e.date===d));avgDays.textContent=logged.length?`${logged.length} logged day${logged.length===1?'':'s'}`:'No logged days';let denom=Math.max(1,logged.length),sum=k=>logged.reduce((a,d)=>a+(totals(d)[k]||0),0)/denom,knownAvg=k=>{let ds=logged.filter(d=>totals(d).known[k]);return ds.length?ds.reduce((a,d)=>a+totals(d)[k],0)/ds.length:null};avgGrid.innerHTML=[['Calories',Math.round(sum('kcal'))+' kcal'],['Protein',fmt(sum('p'))+' g'],['Carbs',fmt(sum('c'))+' g'],['Fat',fmt(sum('f'))+' g'],['Fiber',nutrientText(knownAvg('fiber'))],['Sugars',nutrientText(knownAvg('sugar'))],['Sat. fat',nutrientText(knownAvg('sat'))]].map(x=>`<div class="avg"><strong>${x[1]}</strong><span>${x[0]}</span></div>`).join('');renderChart(dates);let used=[...logged].reverse();historyList.innerHTML=used.length?used.map(d=>{let t=totals(d);return `<div class="card historyday"><div class="historyhead"><span>${prettyDate(d)}</span><span>${Math.round(t.kcal)} kcal</span></div><div class="sub">Protein ${fmt(t.p)} g · Carbs ${fmt(t.c)} g · Fat ${fmt(t.f)} g</div><div class="sub">Fiber ${t.known.fiber?fmt(t.fiber)+' g':'—'} · Sugars ${t.known.sugar?fmt(t.sugar)+' g':'—'} · Sat. fat ${t.known.sat?fmt(t.sat)+' g':'—'}</div></div>`}).join(''):'<div class="card empty">No history in this period yet.</div>'}
 function prettyDate(s){let [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}
 function chartData(dates){if(historyMode==='daily')return dates.map(d=>({label:d.slice(5),title:prettyDate(d),...totals(d)}));let groups=new Map();dates.forEach(d=>{let dt=new Date(d+'T12:00'),key,label;if(historyMode==='monthly'){key=d.slice(0,7);label=dt.toLocaleDateString(undefined,{month:'short'});}else{let day=(dt.getDay()+6)%7,mon=new Date(dt);mon.setDate(dt.getDate()-day);key=localDate(mon);label=mon.toLocaleDateString(undefined,{month:'short',day:'numeric'});}if(!groups.has(key))groups.set(key,{label,title:key,dates:[]});groups.get(key).dates.push(d)});return [...groups.values()].map(g=>{let used=g.dates.filter(d=>data.entries.some(e=>e.date===d)),out={label:g.label,title:g.title,known:{}};['kcal','p','c','f','fiber','sugar'].forEach(k=>{let valid=(k==='fiber'||k==='sugar')?used.filter(d=>totals(d).known[k]):used;out[k]=valid.length?valid.reduce((a,d)=>a+(totals(d)[k]||0),0)/valid.length:null});return out})}
-function renderChart(dates){let rows=chartData(dates),svg=historyChart,w=500,h=210,L=42,R=42,T=18,B=28,active=[...historySeries],grams=active.filter(k=>k!=='kcal'),kmax=Math.max(500,...rows.map(r=>r.kcal||0))*1.1,gmax=Math.max(50,...rows.flatMap(r=>grams.map(k=>r[k]||0)))*1.1,x=i=>L+i*(w-L-R)/Math.max(1,rows.length-1),yk=v=>h-B-(v/kmax)*(h-T-B),yg=v=>h-B-(v/gmax)*(h-T-B);chartTitle.textContent=historyMode==='daily'?'Daily intake':historyMode==='weekly'?'Weekly average':'Monthly average';chartPeriod.textContent=historyDays==='all'?'All data':historyDays+' days';let html='';for(let i=0;i<4;i++){let yy=T+i*(h-T-B)/3;html+=`<line class="chartgrid" x1="${L}" y1="${yy}" x2="${w-R}" y2="${yy}"/><text class="chartlabel" x="${L-5}" y="${yy+3}" text-anchor="end">${Math.round(kmax*(1-i/3))}</text><text class="chartlabel" x="${w-R+5}" y="${yy+3}" text-anchor="start">${Math.round(gmax*(1-i/3))}</text>`}let colors={kcal:'var(--accent)',p:'var(--protein)',c:'var(--carbs)',f:'var(--fat)',fiber:'#62a87c',sugar:'#b678c4'},names={kcal:'Calories',p:'Protein',c:'Carbs',f:'Fat',fiber:'Fiber',sugar:'Sugar'};active.forEach(k=>{let pts=rows.map((r,i)=>r[k]==null?null:[x(i),k==='kcal'?yk(r[k]):yg(r[k]),r[k],r]).filter(Boolean);if(pts.length){html+=`<polyline fill="none" stroke="${colors[k]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pts.map(q=>q[0]+','+q[1]).join(' ')}"/>`;html+=pts.map(q=>`<circle cx="${q[0]}" cy="${q[1]}" r="3" fill="${colors[k]}"><title>${q[3].title}: ${names[k]} ${fmt(q[2])}${k==='kcal'?' kcal':' g'}</title></circle>`).join('')}});let every=Math.max(1,Math.ceil(rows.length/6));rows.forEach((r,i)=>{if(i%every===0||i===rows.length-1)html+=`<text class="chartlabel" x="${x(i)}" y="204" text-anchor="middle">${r.label}</text>`});if(!active.length)html+=`<text class="chartlabel" x="250" y="105" text-anchor="middle">Select a nutrient above</text>`;svg.innerHTML=html}
+function niceStepAtLeast(raw){
+ if(!Number.isFinite(raw)||raw<=0)return 1;
+ let pow=10**Math.floor(Math.log10(raw)),fraction=raw/pow,choices=[1,2,2.5,5,10];
+ return (choices.find(c=>c>=fraction-1e-12)||10)*pow
+}
+function niceDualScale(kcalMax,gramsMax){
+ let kbase=Math.max(500,kcalMax||0),gbase=Math.max(50,gramsMax||0),best=null;
+ for(let count=4;count<=7;count++){
+   let kstep=niceStepAtLeast(kbase/count),gstep=niceStepAtLeast(gbase/count);
+   let ktop=kstep*count,gtop=gstep*count;
+   let score=(ktop/kbase-1)+(gtop/gbase-1)+0.025*(count-4);
+   if(!best||score<best.score)best={count,kstep,gstep,ktop,gtop,score}
+ }
+ return best
+}
+function renderChart(dates){
+ let rows=chartData(dates),svg=historyChart,w=500,h=210,L=42,R=42,T=18,B=28,active=[...historySeries],grams=active.filter(k=>k!=='kcal');
+ let scale=niceDualScale(Math.max(0,...rows.map(r=>r.kcal||0)),Math.max(0,...rows.flatMap(r=>grams.map(k=>r[k]||0))));
+ let kmax=scale.ktop,gmax=scale.gtop,x=i=>L+i*(w-L-R)/Math.max(1,rows.length-1),yk=v=>h-B-(v/kmax)*(h-T-B),yg=v=>h-B-(v/gmax)*(h-T-B);
+ chartTitle.textContent=historyMode==='daily'?'Daily intake':historyMode==='weekly'?'Weekly average':'Monthly average';
+ chartPeriod.textContent=historyDays==='all'?'All data':historyDays+' days';
+ let html='';
+ for(let i=0;i<=scale.count;i++){
+   let ratio=i/scale.count,yy=h-B-ratio*(h-T-B);
+   html+=`<line class="chartgrid" x1="${L}" y1="${yy}" x2="${w-R}" y2="${yy}"/><text class="chartlabel" x="${L-5}" y="${yy+3}" text-anchor="end">${Math.round(scale.kstep*i)}</text><text class="chartlabel" x="${w-R+5}" y="${yy+3}" text-anchor="start">${fmt(scale.gstep*i)}</text>`
+ }
+ let colors={kcal:'var(--accent)',p:'var(--protein)',c:'var(--carbs)',f:'var(--fat)',fiber:'#62a87c',sugar:'#b678c4'},names={kcal:'Calories',p:'Protein',c:'Carbs',f:'Fat',fiber:'Fiber',sugar:'Sugar'};
+ active.forEach(k=>{
+   let pts=rows.map((r,i)=>r[k]==null?null:[x(i),k==='kcal'?yk(r[k]):yg(r[k]),r[k],r]).filter(Boolean);
+   if(pts.length){
+     html+=`<polyline fill="none" stroke="${colors[k]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pts.map(q=>q[0]+','+q[1]).join(' ')}"/>`;
+     html+=pts.map(q=>`<circle cx="${q[0]}" cy="${q[1]}" r="3" fill="${colors[k]}"><title>${q[3].title}: ${names[k]} ${fmt(q[2])}${k==='kcal'?' kcal':' g'}</title></circle>`).join('')
+   }
+ });
+ let every=Math.max(1,Math.ceil(rows.length/6));
+ rows.forEach((r,i)=>{if(i%every===0||i===rows.length-1)html+=`<text class="chartlabel" x="${x(i)}" y="204" text-anchor="middle">${r.label}</text>`});
+ if(!active.length)html+=`<text class="chartlabel" x="250" y="105" text-anchor="middle">Select a nutrient above</text>`;
+ svg.innerHTML=html
+}
 function openFoodPicker(){pickerSearch.value='';renderPicker();pickerModal.classList.add('show');setTimeout(()=>pickerSearch.focus(),100)}
 function renderPicker(){let q=pickerSearch.value.toLowerCase(),foods=data.foods.filter(f=>f.name.toLowerCase().includes(q)||(f.aliases||[]).some(a=>a.toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name));pickerList.innerHTML=foods.map(f=>`<div class="foodrow" onclick="chooseFood('${f.id}')" style="cursor:pointer"><div><b>${esc(f.name)}</b><div class="sub">P ${f.p} · C ${f.c} · F ${f.f} per 100 g</div></div><b>${f.kcal}</b></div>`).join('')||'<div class="empty">No matching food.</div>'}
 function chooseFood(id){selectedFood=data.foods.find(f=>f.id===id);closeModal('pickerModal');amountTitle.textContent=selectedFood.name;amountInput.value=100;amountMealType.value=lastMealType();updatePreview();amountModal.classList.add('show');setTimeout(()=>amountInput.select(),100)}
