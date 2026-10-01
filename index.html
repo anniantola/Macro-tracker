@@ -16,7 +16,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 
 .quick-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 .quick-row input{min-width:0}
-.parse-results{margin-top:12px}.parse-result{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}.parse-result:first-child{border-top:0}.parse-warn{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px}.match-note{font-size:11px;opacity:.72}.parse-ambiguity{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px}.parse-ambiguity b{display:block;margin-bottom:3px}.parse-choices{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.parse-choices button{padding:7px 9px;border-radius:9px;font-size:12px}
+.parse-results{margin-top:12px}.parse-result{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}.parse-result:first-child{border-top:0}.parse-warn{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px}.match-note{font-size:11px;opacity:.72}.parse-ambiguity{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px}.parse-ambiguity b{display:block;margin-bottom:3px}.parse-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}.parse-choices button{padding:8px 9px;border-radius:9px;font-size:12px;text-align:left;white-space:normal}
 @media(max-width:390px){.quick-row{grid-template-columns:1fr}.quick-row button{width:100%}}
 </style>
 <meta name="theme-color" content="#0B0B0D" id="themeColorMeta">
@@ -211,10 +211,13 @@ function foodMatchScore(query,name){
  return Math.max(tokenHits*.82,lev*.78)
 }
 function rankedFoodMatches(query){
- return data.foods.map(f=>({
-   food:f,
-   score:Math.max(foodMatchScore(query,f.name),...(f.aliases||[]).map(a=>foodMatchScore(query,a)))
- })).sort((a,b)=>b.score-a.score)
+ let q=normFoodName(query),qWords=q.split(' ');
+ return data.foods.map(f=>{
+   let n=normFoodName(f.name),score=Math.max(foodMatchScore(query,f.name),...(f.aliases||[]).map(a=>foodMatchScore(query,a)));
+   // Category guard: asking for wine should not surface wine vinegar unless vinegar was requested.
+   if(qWords.includes('wine')&&!qWords.includes('vinegar')&&n.includes('vinegar'))score=0;
+   return{food:f,score}
+ }).sort((a,b)=>b.score-a.score||a.food.name.localeCompare(b.food.name))
 }
 function bestFoodMatch(query){return rankedFoodMatches(query)[0]||null}
 function splitQuickEntry(text){
@@ -236,8 +239,7 @@ function parseFoodPart(part){
 
  let second=ranked[1],uniqueExact=top.score===1&&(!second||second.score<1);
  let candidates=ranked
-   .filter(x=>x.score>=.70&&top.score-x.score<=.05)
-   .slice(0,4);
+   .filter(x=>x.score>=.70&&top.score-x.score<=.05);
 
  if(!uniqueExact&&candidates.length>1){
    return {raw:part,name,amount,ambiguous:true,candidates,score:top.score}
