@@ -1,4 +1,4 @@
-const CACHE_NAME = "macro-tracker-v2";
+const CACHE_NAME = "macro-tracker-v3";
 
 const APP_SHELL = [
   "./",
@@ -9,7 +9,6 @@ const APP_SHELL = [
   "./icon-512.png"
 ];
 
-// Cache the basic app shell during installation.
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -18,14 +17,13 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Delete caches belonging to older versions.
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
       .then((names) =>
         Promise.all(
           names
-            .filter((name) => name !== CACHE_NAME)
+            .filter((name) => name.startsWith("macro-tracker-") && name !== CACHE_NAME)
             .map((name) => caches.delete(name))
         )
       )
@@ -33,10 +31,6 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// HTML/navigation: network first.
-// This means a newly deployed index.html is picked up when online.
-//
-// Static assets: cache first, then network.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
@@ -44,19 +38,31 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
+      caches.match("./index.html").then((cached) => {
+        const update = fetch(request)
+          .then((response) => {
+            if (response && response.ok) {
+              const copy = response.clone();
+              event.waitUntil(
+                caches.open(CACHE_NAME)
+                  .then((cache) => cache.put("./index.html", copy))
+              );
+            }
+            return response;
+          })
+          .catch(() => null);
 
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put("./index.html", copy);
-          });
+        if (cached) {
+          event.waitUntil(update);
+          return cached;
+        }
 
-          return response;
-        })
-        .catch(() => caches.match("./index.html"))
+        return update.then((response) => {
+          if (response) return response;
+          return caches.match("./index.html");
+        });
+      })
     );
-
     return;
   }
 
@@ -71,9 +77,10 @@ self.addEventListener("fetch", (event) => {
 
         const copy = response.clone();
 
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, copy);
-        });
+        event.waitUntil(
+          caches.open(CACHE_NAME)
+            .then((cache) => cache.put(request, copy))
+        );
 
         return response;
       });
