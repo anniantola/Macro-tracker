@@ -99,6 +99,7 @@ function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x)return x}ca
 function migrate(){
  if(!Array.isArray(data.foods))data.foods=[];if(!Array.isArray(data.meals))data.meals=[];if(!Array.isArray(data.entries))data.entries=[];
  if(!Array.isArray(data.deletedFoodIds))data.deletedFoodIds=[];
+ if(!data.barcodeCache||typeof data.barcodeCache!=='object'||Array.isArray(data.barcodeCache))data.barcodeCache={};
  data.deletedFoodIds=[...new Set(data.deletedFoodIds.filter(id=>typeof id==='string'&&/^basic-\d+$/.test(id)))];
  data.foods.forEach(f=>{['fiber','sugar','sat','mono','poly','alcohol'].forEach(k=>{if(!(k in f))f[k]=null});if((f.source==='generic-basic'||/^basic-\d+$/.test(f.id||''))&&val(f.alcohol)===null)f.alcohol=0});
 
@@ -350,6 +351,58 @@ async function startZXingBarcodeScanner(){
 function cleanBarcodeCode(code){
  return String(code||'').trim().replace(/\s+/g,'')
 }
+const BARCODE_CACHE_LIMIT=300;
+
+function ensureBarcodeCache(){
+ if(!data.barcodeCache||typeof data.barcodeCache!=='object'||Array.isArray(data.barcodeCache))data.barcodeCache={}
+}
+function compactBarcodeProduct(p){
+ return{
+   code:String(p.code||''),
+   name:String(p.name||'Scanned product'),
+   brand:String(p.brand||''),
+   quantity:String(p.quantity||''),
+   nutritionDataPer:String(p.nutritionDataPer||'100g'),
+   kcal:p.kcal??null,p:p.p??null,c:p.c??null,f:p.f??null,
+   fiber:p.fiber??null,sugar:p.sugar??null,alcohol:p.alcohol??null,
+   sat:p.sat??null,mono:p.mono??null,poly:p.poly??null,
+   cachedAt:Date.now()
+ }
+}
+function cacheBarcodeProduct(p){
+ if(!p||!p.code)return;
+ ensureBarcodeCache();
+ data.barcodeCache[String(p.code)]=compactBarcodeProduct(p);
+ let entries=Object.entries(data.barcodeCache);
+ if(entries.length>BARCODE_CACHE_LIMIT){
+   entries.sort((a,b)=>(b[1]?.cachedAt||0)-(a[1]?.cachedAt||0));
+   data.barcodeCache=Object.fromEntries(entries.slice(0,BARCODE_CACHE_LIMIT))
+ }
+ save()
+}
+function cachedBarcodeProduct(code){
+ ensureBarcodeCache();
+ let p=data.barcodeCache[String(code)];
+ if(!p)return null;
+ p.cachedAt=Date.now();
+ save();
+ return{...p}
+}
+function savedFoodBarcodeProduct(code){
+ let f=data.foods.find(x=>String(x.barcode||'')===String(code));
+ if(!f)return null;
+ return{
+   code:String(code),
+   name:f.name||'Saved product',
+   brand:f.brand||'',
+   quantity:f.quantity||'',
+   nutritionDataPer:'100g',
+   kcal:val(f.kcal),p:val(f.p),c:val(f.c),f:val(f.f),
+   fiber:val(f.fiber),sugar:val(f.sugar),alcohol:val(f.alcohol),
+   sat:val(f.sat),mono:val(f.mono),poly:val(f.poly),
+   localSource:'saved'
+ }
+}
 async function handleBarcodeDetected(code){
  code=cleanBarcodeCode(code);
  if(!code||barcodeLookupBusy||code===barcodeLastCode)return;
@@ -400,6 +453,18 @@ function normalizeOFFProduct(code,p){
 }
 async function lookupBarcodeProduct(code){
  try{
+   let saved=savedFoodBarcodeProduct(code);
+   if(saved){
+     currentBarcodeProduct=saved;
+     renderBarcodeProduct(saved,'saved');
+     return
+   }
+   let cached=cachedBarcodeProduct(code);
+   if(cached){
+     currentBarcodeProduct=cached;
+     renderBarcodeProduct(cached,'cache');
+     return
+   }
    let fields='code,product_name,generic_name,brands,quantity,nutrition_data_per,nutriments';
    let url='https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json?fields='+encodeURIComponent(fields);
    let response=await fetch(url,{headers:{'Accept':'application/json'}});
@@ -410,7 +475,8 @@ async function lookupBarcodeProduct(code){
      return
    }
    currentBarcodeProduct=normalizeOFFProduct(code,result.product);
-   renderBarcodeProduct(currentBarcodeProduct)
+   cacheBarcodeProduct(currentBarcodeProduct);
+   renderBarcodeProduct(currentBarcodeProduct,'network')
  }catch(e){
    console.error('Open Food Facts lookup failed',e);
    barcodeLookupBusy=false;
@@ -424,7 +490,7 @@ function barcodeValue(v,unit='g'){
 function barcodeImportReady(p){
  return [p.kcal,p.p,p.c,p.f].every(v=>v!==null&&Number.isFinite(+v))
 }
-function renderBarcodeProduct(p){
+function renderBarcodeProduct(p,source='network'){
  barcodeLookupBusy=false;
  barcodeScannerPane.style.display='none';
  barcodeResultPane.style.display='block';
@@ -443,7 +509,11 @@ function renderBarcodeProduct(p){
    <div class="sub">Barcode ${esc(p.code)} · values per 100 g</div>
    <div class="barcode-macros">${cells.map(([k,v])=>`<div class="barcode-macro"><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join('')}</div>
    ${!ready?'<p class="note" style="margin-top:12px"><b>Incomplete nutrition data.</b> Calories, protein, carbs and fat are required before this product can be imported automatically.</p>':''}
-   <p class="note" style="margin-top:12px">Product data: Open Food Facts. Verify the values against the package when accuracy matters.</p>
+   <p class="note" style="margin-top:12px">${
+     source==='saved'?'Loaded instantly from your saved Food Library item.':
+     source==='cache'?'Loaded instantly from this device’s barcode cache.':
+     'Product data: Open Food Facts.'
+   } Verify the values against the package when accuracy matters.</p>
    <div class="actions">
      <button class="ghost" type="button" ${ready?'':'disabled'} onclick="useBarcodeAsCustom()">Use as Custom</button>
      <button type="button" ${ready?'':'disabled'} onclick="saveBarcodeProduct()">${existing?'Update & add':'Save & add'}</button>
@@ -472,6 +542,7 @@ function barcodeDisplayName(p){
 function useBarcodeAsCustom(){
  let p=currentBarcodeProduct;if(!p||!barcodeImportReady(p))return;
  let scratch=data.foods.find(f=>normFoodName(f.name)==='custom');
+ cacheBarcodeProduct(p);
  let values=barcodeFoodValues(p);
  if(!scratch){
    scratch={id:'custom-scratch',name:'Custom',custom:true,source:'scratch',...values};
@@ -490,11 +561,12 @@ function saveBarcodeProduct(){
  let values=barcodeFoodValues(p),food=data.foods.find(f=>String(f.barcode||'')===p.code);
  let displayName=barcodeDisplayName(p);
  if(food){
-   Object.assign(food,values,{name:displayName,barcode:p.code,brand:p.brand,custom:true,source:'open-food-facts'})
+   Object.assign(food,values,{name:displayName,barcode:p.code,brand:p.brand,quantity:p.quantity||'',custom:true,source:'open-food-facts'})
  }else{
-   food={id:'custom-'+Date.now(),name:displayName,barcode:p.code,brand:p.brand,custom:true,source:'open-food-facts',...values};
+   food={id:'custom-'+Date.now(),name:displayName,barcode:p.code,brand:p.brand,quantity:p.quantity||'',custom:true,source:'open-food-facts',...values};
    data.foods.push(food)
  }
+ cacheBarcodeProduct({...p,name:displayName});
  save();
  closeModal('barcodeModal');
  render();
