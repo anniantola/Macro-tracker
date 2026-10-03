@@ -4,7 +4,19 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Macro Tracker</title>
 <style>
-:root{--bg:#f6f6f7;--card:#fff;--card2:#f0f0f2;--line:#dddde2;--text:#18181b;--muted:#71717a;--accent:#6d5dfc;--protein:#6d5dfc;--carbs:#e39a3b;--fat:#d65d7a;--danger:#c43c3c}*{box-sizing:border-box}body.dark{--bg:#0B0B0D;--card:#151518;--card2:#1D1D21;--line:#303036;--text:#F4F4F5;--muted:#A1A1AA}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{max-width:560px;margin:auto;min-height:100vh;padding:18px 16px 92px}header{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 18px}h1{font-size:25px;margin:0}.date{color:var(--muted);font-size:13px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}.kcal{text-align:center;padding:8px 0 16px}.kcal strong{font-size:36px;display:block}.kcal span{color:var(--muted)}.macro{display:grid;grid-template-columns:68px 1fr 80px;gap:9px;align-items:center;margin:10px 0;font-size:13px}.bar{height:8px;background:var(--card2);border-radius:10px;overflow:hidden}.fill{height:100%;border-radius:10px}.p{background:var(--protein)}.c{background:var(--carbs)}.f{background:var(--fat)}.right{text-align:right;color:var(--muted)}button,input{font:inherit}button{border:0;border-radius:12px;padding:11px 14px;background:var(--accent);color:white;font-weight:650;cursor:pointer}.ghost{background:var(--card2);color:var(--text);border:1px solid var(--line)}.danger{color:var(--danger)}.wide{width:100%}.section-title{font-size:12px;color:var(--muted);font-weight:750;letter-spacing:.08em;margin:18px 4px 8px}.entry,.foodrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.entry:last-child,.foodrow:last-child{border:0}.entry b,.foodrow b{display:block}.sub{font-size:12px;color:var(--muted);margin-top:3px}.empty{color:var(--muted);text-align:center;padding:18px 0}.fab-wrap{position:fixed;right:max(20px,calc((100vw - 560px)/2 + 20px));bottom:78px;z-index:4;display:flex;flex-direction:column;align-items:flex-end;gap:8px}.fab{width:54px;height:54px;border-radius:50%;font-size:26px;box-shadow:0 8px 28px #0003;display:grid;place-items:center;padding:0;transition:transform .18s ease}.fab-wrap.open .fab{transform:rotate(45deg)}.fab-menu{display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity .16s ease,transform .16s ease}.fab-wrap.open .fab-menu{pointer-events:auto;opacity:1;transform:translateY(0)}.fab-action{display:flex;align-items:center;gap:8px;background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:0 6px 22px #0002;border-radius:14px;padding:10px 13px;white-space:nowrap}.fab-action .fab-icon{font-size:17px;line-height:1;width:19px;text-align:center}.nav{position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--card) 94%,transparent);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}.navin{width:min(560px,100%);display:grid;grid-template-columns:repeat(4,1fr)}.nav button{background:none;color:var(--muted);padding:14px 4px 12px;border-radius:0;font-size:12px}.nav button.active{color:var(--text)}.page{display:none}.page.active{display:block}.search,input{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:12px;outline:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modal{display:none;position:fixed;inset:0;background:#0008;z-index:5;padding:20px;align-items:flex-end;justify-content:center}.modal.show{display:flex}.sheet{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;width:min(520px,100%);max-height:88vh;overflow:auto}.sheet h2{margin:0 0 14px}.field{margin:10px 0}.field label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px}.actions{display:flex;gap:8px;margin-top:16px}.actions>*{flex:1}.pill{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 7px}.settingsrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0}.historyday{margin-bottom:10px}.historyhead{display:flex;justify-content:space-between;font-weight:700}.note{font-size:12px;color:var(--muted);line-height:1.45}.file{display:none}.microgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}.microbox{background:var(--card2);border-radius:12px;padding:10px}.microbox b{display:block;font-size:15px}.microbox span{font-size:11px;color:var(--muted)}.microbox.alcohol{grid-column:1/-1}.periods{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.modes button,.series button{background:var(--card2);color:var(--muted);border:1px solid var(--line);padding:8px 6px;font-size:12px}.modes button.active,.series button.active{background:var(--text);color:var(--bg);border-color:var(--text)}.series{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:4px 0 12px}.series button{border-radius:99px;min-width:0}.axislegend{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:3px}.periods button{background:var(--card2);color:var(--muted);border:1px solid var(--line)}.periods button.active{background:var(--accent);color:#fff;border-color:transparent}.avggrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.avg{background:var(--card2);border-radius:12px;padding:11px}.avg strong{display:block;font-size:18px}.avg span{font-size:11px;color:var(--muted)}.chartwrap{overflow-x:auto;padding-top:4px}.chart{width:100%;height:180px;display:block}.chartlabel{fill:var(--muted);font-size:9px}.chartline{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.chartdot{fill:var(--accent)}.chartgrid{stroke:var(--line);stroke-width:1}.foodtop{display:flex;gap:8px;margin-bottom:10px}.foodtop .search{flex:1}.foodtop button{white-space:nowrap}.optional{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.mini-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:5px}.mini-actions span{cursor:pointer;font-size:12px}.clickable{cursor:pointer}.optional-title{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:2px}@media(max-width:360px){.macro{grid-template-columns:60px 1fr 68px}.app{padding-left:12px;padding-right:12px}}
+:root{--bg:#f6f6f7;--card:#fff;--card2:#f0f0f2;--line:#dddde2;--text:#18181b;--muted:#71717a;--accent:#6d5dfc;--protein:#6d5dfc;--carbs:#e39a3b;--fat:#d65d7a;--danger:#c43c3c}*{box-sizing:border-box}body.dark{--bg:#0B0B0D;--card:#151518;--card2:#1D1D21;--line:#303036;--text:#F4F4F5;--muted:#A1A1AA}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{max-width:560px;margin:auto;min-height:100vh;padding:18px 16px 92px}header{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 18px}h1{font-size:25px;margin:0}.date{color:var(--muted);font-size:13px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}.kcal{text-align:center;padding:8px 0 16px}.kcal strong{font-size:36px;display:block}.kcal span{color:var(--muted)}.macro{display:grid;grid-template-columns:68px 1fr 80px;gap:9px;align-items:center;margin:10px 0;font-size:13px}.bar{height:8px;background:var(--card2);border-radius:10px;overflow:hidden}.fill{height:100%;border-radius:10px}.p{background:var(--protein)}.c{background:var(--carbs)}.f{background:var(--fat)}.right{text-align:right;color:var(--muted)}button,input{font:inherit}button{border:0;border-radius:12px;padding:11px 14px;background:var(--accent);color:white;font-weight:650;cursor:pointer}.ghost{background:var(--card2);color:var(--text);border:1px solid var(--line)}.danger{color:var(--danger)}.wide{width:100%}.section-title{font-size:12px;color:var(--muted);font-weight:750;letter-spacing:.08em;margin:18px 4px 8px}.entry,.foodrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.entry:last-child,.foodrow:last-child{border:0}.entry b,.foodrow b{display:block}.sub{font-size:12px;color:var(--muted);margin-top:3px}.empty{color:var(--muted);text-align:center;padding:18px 0}.fab-wrap{position:fixed;right:max(20px,calc((100vw - 560px)/2 + 20px));bottom:78px;z-index:4;display:flex;flex-direction:column;align-items:flex-end;gap:8px}.fab{width:54px;height:54px;border-radius:50%;font-size:26px;box-shadow:0 8px 28px #0003;display:grid;place-items:center;padding:0;transition:transform .18s ease}.fab-wrap.open .fab{transform:rotate(45deg)}.fab-menu{display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity .16s ease,transform .16s ease}.fab-wrap.open .fab-menu{pointer-events:auto;opacity:1;transform:translateY(0)}.fab-action{display:flex;align-items:center;gap:8px;background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:0 6px 22px #0002;border-radius:14px;padding:10px 13px;white-space:nowrap}.fab-action .fab-icon{font-size:17px;line-height:1;width:19px;text-align:center}.nav{position:fixed;bottom:0;left:0;right:0;background:color-mix(in srgb,var(--card) 94%,transparent);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}.navin{width:min(560px,100%);display:grid;grid-template-columns:repeat(4,1fr)}.nav button{background:none;color:var(--muted);padding:14px 4px 12px;border-radius:0;font-size:12px}.nav button.active{color:var(--text)}.page{display:none}.page.active{display:block}.search,input{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:12px;outline:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modal{display:none;position:fixed;inset:0;background:#0008;z-index:5;padding:20px;align-items:flex-end;justify-content:center}.modal.show{display:flex}.sheet{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;width:min(520px,100%);max-height:88vh;overflow:auto}.sheet h2{margin:0 0 14px}.field{margin:10px 0}.field label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px}.actions{display:flex;gap:8px;margin-top:16px}.actions>*{flex:1}.pill{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 7px}.settingsrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0}.historyday{margin-bottom:10px}.historyhead{display:flex;justify-content:space-between;font-weight:700}.note{font-size:12px;color:var(--muted);line-height:1.45}.file{display:none}.microgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}.microbox{background:var(--card2);border-radius:12px;padding:10px}.microbox b{display:block;font-size:15px}.microbox span{font-size:11px;color:var(--muted)}.microbox.alcohol{grid-column:1/-1}.periods{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.modes button,.series button{background:var(--card2);color:var(--muted);border:1px solid var(--line);padding:8px 6px;font-size:12px}.modes button.active,.series button.active{background:var(--text);color:var(--bg);border-color:var(--text)}.series{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:4px 0 12px}.series button{border-radius:99px;min-width:0}.axislegend{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:3px}.periods button{background:var(--card2);color:var(--muted);border:1px solid var(--line)}.periods button.active{background:var(--accent);color:#fff;border-color:transparent}.avggrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.avg{background:var(--card2);border-radius:12px;padding:11px}.avg strong{display:block;font-size:18px}.avg span{font-size:11px;color:var(--muted)}.chartwrap{overflow-x:auto;padding-top:4px}.chart{width:100%;height:180px;display:block}.chartlabel{fill:var(--muted);font-size:9px}.chartline{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.chartdot{fill:var(--accent)}.chartgrid{stroke:var(--line);stroke-width:1}.foodtop{display:flex;gap:8px;margin-bottom:10px}.foodtop .search{flex:1}.foodtop button{white-space:nowrap}.optional{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.mini-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:5px}.mini-actions span{cursor:pointer;font-size:12px}.clickable{cursor:pointer}.optional-title{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.barcode-camera{position:relative;background:#000;border-radius:16px;overflow:hidden;aspect-ratio:4/3;margin:8px 0 10px}
+.barcode-camera video{width:100%;height:100%;object-fit:cover;display:block}
+.barcode-guide{position:absolute;left:10%;right:10%;top:34%;height:32%;border:2px solid #fff;border-radius:12px;box-shadow:0 0 0 999px #0003;pointer-events:none}
+.barcode-guide:after{content:"";position:absolute;left:8%;right:8%;top:50%;border-top:2px solid #fff8}
+.barcode-manual{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}
+.barcode-result{background:var(--card2);border-radius:16px;padding:14px;margin-top:12px}
+.barcode-result h3{margin:0 0 3px;font-size:18px}
+.barcode-macros{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:12px}
+.barcode-macro{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px}
+.barcode-macro b{display:block;font-size:15px}.barcode-macro span{font-size:11px;color:var(--muted)}
+button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:360px){.macro{grid-template-columns:60px 1fr 68px}.app{padding-left:12px;padding-right:12px}}
 
 .mealgroup{margin-bottom:14px}.mealhead{display:flex;align-items:center;justify-content:space-between;padding:4px 2px 8px}.mealhead b{font-size:13px;text-transform:uppercase;letter-spacing:.08em}.mealhead .mealtools{display:flex;gap:10px;font-size:12px}.mealhead .mealtools span{cursor:pointer;text-decoration:underline}.meal-card{margin-bottom:12px}.meal-items{margin-top:8px}.meal-item{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}.meal-item:first-child{border-top:0}.pillrow{display:flex;gap:8px;flex-wrap:wrap}.mealtype{padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);cursor:pointer}.mealtype.active{background:var(--text);color:var(--bg)}.navin{overflow-x:auto;scrollbar-width:none}.navin::-webkit-scrollbar{display:none}.navin button{min-width:68px}.meal-draft-row{display:grid;grid-template-columns:1fr 90px 28px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.meal-draft-row input{width:100%}
 select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text)}
@@ -48,6 +60,22 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 </div>
 <nav class="nav"><div class="navin"><button class="active" data-page="today">Today</button><button data-page="history">History</button><button data-page="meals">Meals</button><button data-page="foods">Foods</button></div></nav>
 <div class="modal" id="pickerModal"><div class="sheet"><h2>Add food</h2><input class="search" id="pickerSearch" placeholder="Search food…"><div id="pickerList"></div><div class="actions"><button class="ghost" onclick="closeModal('pickerModal')">Cancel</button><button onclick="openNewFood(true)">New food</button></div></div></div>
+<div class="modal" id="barcodeModal"><div class="sheet">
+<h2>Scan barcode</h2>
+<div id="barcodeScannerPane">
+  <div class="barcode-camera"><video id="barcodeVideo" autoplay muted playsinline></video><div class="barcode-guide"></div></div>
+  <div class="note" id="barcodeStatus">Starting camera…</div>
+  <div class="barcode-manual">
+    <input id="barcodeManual" inputmode="numeric" autocomplete="off" placeholder="Or enter barcode number">
+    <button class="ghost" type="button" onclick="lookupManualBarcode()">Look up</button>
+  </div>
+</div>
+<div id="barcodeResultPane" style="display:none"></div>
+<div class="actions">
+  <button class="ghost" type="button" onclick="closeModal('barcodeModal')">Cancel</button>
+  <button class="ghost" id="barcodeRescanBtn" type="button" onclick="restartBarcodeScanner()" style="display:none">Scan again</button>
+</div>
+</div></div>
 <div class="modal" id="amountModal"><div class="sheet"><h2 id="amountTitle">Food</h2><div class="field"><label>Amount (g)</label><input id="amountInput" type="number" inputmode="decimal" value="100"></div><div class="field"><label>Meal</label><select id="amountMealType"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select></div><div class="note" id="amountPreview"></div><div class="actions"><button class="ghost" onclick="closeModal('amountModal')">Cancel</button><button onclick="addSelectedFood()">Add</button></div></div></div>
 <div class="modal" id="newFoodModal"><div class="sheet"><h2 id="foodEditorTitle">New food</h2><div class="field"><label>Name</label><input id="nfName"></div><div class="grid"><div class="field"><label>kcal / 100 g</label><input id="nfKcal" type="number" step="0.1"></div><div class="field"><label>Protein / 100 g</label><input id="nfP" type="number" step="0.1"></div><div class="field"><label>Carbs / 100 g</label><input id="nfC" type="number" step="0.1"></div><div class="field"><label>Fat / 100 g</label><input id="nfF" type="number" step="0.1"></div></div><div class="optional"><div class="optional-title">Extra nutrition (optional)</div><div class="grid"><div class="field"><label>Fiber / 100 g</label><input id="nfFiber" type="number" step="0.1"></div><div class="field"><label>Sugars / 100 g</label><input id="nfSugar" type="number" step="0.1"></div><div class="field"><label>Alcohol / 100 g</label><input id="nfAlcohol" type="number" step="0.1" min="0"></div><div class="field"><label>Saturated fat / 100 g</label><input id="nfSat" type="number" step="0.1"></div><div class="field"><label>Monounsaturated / 100 g</label><input id="nfMono" type="number" step="0.1"></div><div class="field"><label>Polyunsaturated / 100 g</label><input id="nfPoly" type="number" step="0.1"></div></div><p class="note">Leave fields blank when the package does not provide them. Missing values are shown as unknown, not zero. Total kcal should already include any alcohol energy; the tracker does not add alcohol calories to the entered kcal total.</p></div><div class="actions"><button class="ghost" onclick="closeModal('newFoodModal')">Cancel</button><button onclick="saveFoodEditor()">Save</button></div><button id="deleteFoodBtn" class="ghost wide danger" style="display:none;margin-top:10px" onclick="deleteEditingFood()">Delete food</button></div></div>
 <div class="modal" id="editEntryModal"><div class="sheet"><h2 id="editEntryTitle">Edit entry</h2><div class="field"><label>Amount (g)</label><input id="editEntryAmount" type="number" inputmode="decimal" step="0.1"></div><div class="field"><label>Meal</label><select id="editEntryMealType"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select></div><div class="note" id="editEntryPreview"></div><div class="actions"><button class="ghost" onclick="closeModal('editEntryModal')">Cancel</button><button onclick="saveEntryEdit()">Save</button></div><button class="ghost wide danger" style="margin-top:10px" onclick="deleteEditingEntry()">Delete entry</button></div></div>
@@ -200,9 +228,278 @@ function openLibraryFromFab(){
  setAddFabOpen(false);
  openFoodPicker()
 }
+let barcodeStream=null,barcodeTimer=null,barcodeDetector=null,barcodeZXingControls=null,
+    barcodeZXingReader=null,barcodeLookupBusy=false,currentBarcodeProduct=null,barcodeLastCode='';
+
 function openBarcodeFromFab(){
  setAddFabOpen(false);
- alert('Barcode scanner entry point is ready. The scanner itself has not been added yet.')
+ barcodeModal.classList.add('show');
+ resetBarcodePane();
+ startBarcodeScanner()
+}
+function resetBarcodePane(){
+ currentBarcodeProduct=null;barcodeLastCode='';barcodeLookupBusy=false;
+ barcodeScannerPane.style.display='block';
+ barcodeResultPane.style.display='none';
+ barcodeResultPane.innerHTML='';
+ barcodeRescanBtn.style.display='none';
+ barcodeManual.value='';
+ barcodeStatus.textContent='Starting camera…'
+}
+function barcodeSetStatus(msg){barcodeStatus.textContent=msg}
+function stopBarcodeScanner(){
+ if(barcodeTimer){clearTimeout(barcodeTimer);barcodeTimer=null}
+ barcodeDetector=null;
+ if(barcodeZXingControls){try{barcodeZXingControls.stop()}catch(e){}barcodeZXingControls=null}
+ barcodeZXingReader=null;
+ if(barcodeStream){
+   barcodeStream.getTracks().forEach(t=>t.stop());
+   barcodeStream=null
+ }
+ if(typeof barcodeVideo!=='undefined'){
+   try{barcodeVideo.pause()}catch(e){}
+   barcodeVideo.srcObject=null
+ }
+}
+async function startBarcodeScanner(){
+ stopBarcodeScanner();
+ barcodeSetStatus('Starting camera…');
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+   barcodeSetStatus('Camera scanning is not supported here. Enter the barcode number below.');
+   return
+ }
+ try{
+   if('BarcodeDetector' in globalThis){
+     let supported=[];
+     try{supported=await BarcodeDetector.getSupportedFormats()}catch(e){}
+     let wanted=['ean_13','ean_8','upc_a','upc_e','code_128'].filter(x=>supported.includes(x));
+     if(wanted.length){
+       barcodeStream=await navigator.mediaDevices.getUserMedia({
+         audio:false,
+         video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+       });
+       barcodeVideo.srcObject=barcodeStream;
+       await barcodeVideo.play();
+       barcodeDetector=new BarcodeDetector({formats:wanted});
+       barcodeSetStatus('Point the camera at the product barcode.');
+       nativeBarcodeLoop();
+       return
+     }
+   }
+   await startZXingBarcodeScanner()
+ }catch(e){
+   console.error('Barcode camera error',e);
+   stopBarcodeScanner();
+   barcodeSetStatus('Camera could not start. You can still enter the barcode number manually.')
+ }
+}
+async function nativeBarcodeLoop(){
+ if(!barcodeDetector||!barcodeModal.classList.contains('show'))return;
+ if(!barcodeLookupBusy&&barcodeVideo.readyState>=2){
+   try{
+     let found=await barcodeDetector.detect(barcodeVideo);
+     if(found&&found.length){
+       let code=(found[0].rawValue||'').trim();
+       if(code){handleBarcodeDetected(code);return}
+     }
+   }catch(e){}
+ }
+ barcodeTimer=setTimeout(nativeBarcodeLoop,220)
+}
+function loadZXing(){
+ return new Promise((resolve,reject)=>{
+   if(globalThis.ZXingBrowser)return resolve(globalThis.ZXingBrowser);
+   let old=document.getElementById('zxingBrowserScript');
+   if(old){
+     old.addEventListener('load',()=>resolve(globalThis.ZXingBrowser),{once:true});
+     old.addEventListener('error',reject,{once:true});
+     return
+   }
+   let s=document.createElement('script');
+   s.id='zxingBrowserScript';
+   s.src='https://unpkg.com/@zxing/browser@0.2.1';
+   s.onload=()=>globalThis.ZXingBrowser?resolve(globalThis.ZXingBrowser):reject(new Error('ZXing did not load'));
+   s.onerror=()=>reject(new Error('ZXing could not load'));
+   document.head.appendChild(s)
+ })
+}
+async function startZXingBarcodeScanner(){
+ try{
+   let ZX=await loadZXing();
+   barcodeZXingReader=new ZX.BrowserMultiFormatReader(undefined,{delayBetweenScanAttempts:250,delayBetweenScanSuccess:1000});
+   barcodeSetStatus('Point the camera at the product barcode.');
+   barcodeZXingControls=await barcodeZXingReader.decodeFromConstraints(
+     {audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}},
+     barcodeVideo,
+     (result,error,controls)=>{
+       if(result&&!barcodeLookupBusy){
+         let code=(result.getText?result.getText():String(result.text||result)).trim();
+         if(code){
+           barcodeZXingControls=controls;
+           handleBarcodeDetected(code)
+         }
+       }
+     }
+   )
+ }catch(e){
+   console.error('ZXing scanner error',e);
+   stopBarcodeScanner();
+   barcodeSetStatus('Camera scanner is unavailable. Enter the barcode number below.')
+ }
+}
+function cleanBarcodeCode(code){
+ return String(code||'').trim().replace(/\s+/g,'')
+}
+async function handleBarcodeDetected(code){
+ code=cleanBarcodeCode(code);
+ if(!code||barcodeLookupBusy||code===barcodeLastCode)return;
+ barcodeLastCode=code;barcodeLookupBusy=true;
+ stopBarcodeScanner();
+ barcodeSetStatus('Barcode '+code+' detected. Looking up product…');
+ await lookupBarcodeProduct(code)
+}
+function lookupManualBarcode(){
+ let code=cleanBarcodeCode(barcodeManual.value);
+ if(!code)return alert('Enter a barcode number.');
+ barcodeLookupBusy=true;barcodeLastCode=code;
+ stopBarcodeScanner();
+ barcodeSetStatus('Looking up '+code+'…');
+ lookupBarcodeProduct(code)
+}
+function offNum(v){
+ if(v===null||v===undefined||v==='')return null;
+ let n=Number(v);
+ return Number.isFinite(n)?n:null
+}
+function offNutriment(n,key){
+ return offNum(n&&n[key+'_100g'])
+}
+function normalizeOFFProduct(code,p){
+ let n=p.nutriments||{},kcal=offNutriment(n,'energy-kcal');
+ if(kcal===null){
+   let kj=offNutriment(n,'energy-kj');
+   if(kj!==null)kcal=kj/4.184
+ }
+ return{
+   code:String(code),
+   name:(p.product_name||p.generic_name||'Scanned product').trim(),
+   brand:(p.brands||'').trim(),
+   quantity:(p.quantity||'').trim(),
+   nutritionDataPer:p.nutrition_data_per||'100g',
+   kcal:kcal===null?null:+kcal.toFixed(1),
+   p:offNutriment(n,'proteins'),
+   c:offNutriment(n,'carbohydrates'),
+   f:offNutriment(n,'fat'),
+   fiber:offNutriment(n,'fiber'),
+   sugar:offNutriment(n,'sugars'),
+   alcohol:offNutriment(n,'alcohol'),
+   sat:offNutriment(n,'saturated-fat'),
+   mono:offNutriment(n,'monounsaturated-fat'),
+   poly:offNutriment(n,'polyunsaturated-fat')
+ }
+}
+async function lookupBarcodeProduct(code){
+ try{
+   let fields='code,product_name,generic_name,brands,quantity,nutrition_data_per,nutriments';
+   let url='https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json?fields='+encodeURIComponent(fields);
+   let response=await fetch(url,{headers:{'Accept':'application/json'}});
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   let result=await response.json();
+   if(!result||result.status!==1||!result.product){
+     showBarcodeNotFound(code);
+     return
+   }
+   currentBarcodeProduct=normalizeOFFProduct(code,result.product);
+   renderBarcodeProduct(currentBarcodeProduct)
+ }catch(e){
+   console.error('Open Food Facts lookup failed',e);
+   barcodeLookupBusy=false;
+   barcodeSetStatus('Product lookup failed. Check your connection or enter the barcode again.');
+   barcodeRescanBtn.style.display='inline-block'
+ }
+}
+function barcodeValue(v,unit='g'){
+ return v===null?'—':fmt(v)+(unit?' '+unit:'')
+}
+function barcodeImportReady(p){
+ return [p.kcal,p.p,p.c,p.f].every(v=>v!==null&&Number.isFinite(+v))
+}
+function renderBarcodeProduct(p){
+ barcodeLookupBusy=false;
+ barcodeScannerPane.style.display='none';
+ barcodeResultPane.style.display='block';
+ barcodeRescanBtn.style.display='inline-block';
+ let ready=barcodeImportReady(p),existing=data.foods.find(f=>String(f.barcode||'')===p.code);
+ let subtitle=[p.brand,p.quantity].filter(Boolean).join(' · ');
+ let cells=[
+   ['Calories',p.kcal===null?'—':fmt(p.kcal)+' kcal'],
+   ['Protein',barcodeValue(p.p)],['Carbs',barcodeValue(p.c)],['Fat',barcodeValue(p.f)],
+   ['Sugars',barcodeValue(p.sugar)],['Fiber',barcodeValue(p.fiber)],
+   ['Saturated',barcodeValue(p.sat)],['Alcohol',barcodeValue(p.alcohol)]
+ ];
+ barcodeResultPane.innerHTML=`<div class="barcode-result">
+   <h3>${esc(p.name)}</h3>
+   ${subtitle?`<div class="sub">${esc(subtitle)}</div>`:''}
+   <div class="sub">Barcode ${esc(p.code)} · values per 100 g</div>
+   <div class="barcode-macros">${cells.map(([k,v])=>`<div class="barcode-macro"><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join('')}</div>
+   ${!ready?'<p class="note" style="margin-top:12px"><b>Incomplete nutrition data.</b> Calories, protein, carbs and fat are required before this product can be imported automatically.</p>':''}
+   <p class="note" style="margin-top:12px">Product data: Open Food Facts. Verify the values against the package when accuracy matters.</p>
+   <div class="actions">
+     <button class="ghost" type="button" ${ready?'':'disabled'} onclick="useBarcodeAsCustom()">Use as Custom</button>
+     <button type="button" ${ready?'':'disabled'} onclick="saveBarcodeProduct()">${existing?'Update & add':'Save & add'}</button>
+   </div>
+ </div>`
+}
+function showBarcodeNotFound(code){
+ barcodeLookupBusy=false;
+ barcodeScannerPane.style.display='none';
+ barcodeResultPane.style.display='block';
+ barcodeRescanBtn.style.display='inline-block';
+ barcodeResultPane.innerHTML=`<div class="barcode-result"><h3>Product not found</h3>
+   <div class="sub">Barcode ${esc(code)}</div>
+   <p class="note">Open Food Facts does not currently have this barcode. You can scan another product or add the food manually.</p>
+   <button class="ghost wide" type="button" onclick="closeModal('barcodeModal');openNewFood(true)">Add manually</button>
+ </div>`
+}
+function barcodeFoodValues(p){
+ return{kcal:p.kcal,p:p.p,c:p.c,f:p.f,fiber:p.fiber,sugar:p.sugar,alcohol:p.alcohol,
+        sat:p.sat,mono:p.mono,poly:p.poly}
+}
+function useBarcodeAsCustom(){
+ let p=currentBarcodeProduct;if(!p||!barcodeImportReady(p))return;
+ let scratch=data.foods.find(f=>normFoodName(f.name)==='custom');
+ let values=barcodeFoodValues(p);
+ if(!scratch){
+   scratch={id:'custom-scratch',name:'Custom',custom:true,source:'scratch',...values};
+   data.foods.push(scratch)
+ }else{
+   Object.assign(scratch,values,{name:'Custom',custom:true,source:'scratch'});
+   delete scratch.barcode;delete scratch.brands
+ }
+ save();
+ closeModal('barcodeModal');
+ render();
+ chooseFood(scratch.id)
+}
+function saveBarcodeProduct(){
+ let p=currentBarcodeProduct;if(!p||!barcodeImportReady(p))return;
+ let values=barcodeFoodValues(p),food=data.foods.find(f=>String(f.barcode||'')===p.code);
+ let displayName=p.brand&&!normFoodName(p.name).includes(normFoodName(p.brand))?p.brand+' '+p.name:p.name;
+ if(food){
+   Object.assign(food,values,{name:displayName,barcode:p.code,brand:p.brand,custom:true,source:'open-food-facts'})
+ }else{
+   food={id:'custom-'+Date.now(),name:displayName,barcode:p.code,brand:p.brand,custom:true,source:'open-food-facts',...values};
+   data.foods.push(food)
+ }
+ save();
+ closeModal('barcodeModal');
+ render();
+ chooseFood(food.id)
+}
+function restartBarcodeScanner(){
+ stopBarcodeScanner();
+ resetBarcodePane();
+ startBarcodeScanner()
 }
 function openFoodPicker(){pickerSearch.value='';renderPicker();pickerModal.classList.add('show');setTimeout(()=>pickerSearch.focus(),100)}
 function renderPicker(){let q=pickerSearch.value.toLowerCase(),foods=data.foods.filter(f=>f.name.toLowerCase().includes(q)||(f.aliases||[]).some(a=>a.toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name));pickerList.innerHTML=foods.map(f=>`<div class="foodrow" onclick="chooseFood('${f.id}')" style="cursor:pointer"><div><b>${esc(f.name)}</b><div class="sub">P ${f.p} · C ${f.c} · F ${f.f} per 100 g</div></div><b>${f.kcal}</b></div>`).join('')||'<div class="empty">No matching food.</div>'}
@@ -436,7 +733,7 @@ function toggleTheme(){data.dark=!data.dark;save();render()}
 function saveGoals(){data.goals={kcal:+goalKcal.value||0,p:+goalP.value||0,c:+goalC.value||0,f:+goalF.value||0};save();render()}
 function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=`macro-tracker-backup-${localDate()}.json`;a.click();URL.revokeObjectURL(a.href)}
 function importData(file){let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.foods||!x.entries||!x.goals)throw 0;if(confirm('Replace current tracker data with this backup?')){data=x;migrate();render()}}catch(e){alert('That file does not look like a valid Macro Tracker backup.')}};r.readAsText(file)}
-function closeModal(id){document.getElementById(id).classList.remove('show')}
+function closeModal(id){if(id==='barcodeModal')stopBarcodeScanner();document.getElementById(id).classList.remove('show')}
 function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toggleSettings(){
  let active=document.querySelector('.page.active')?.id||'today';
@@ -449,7 +746,7 @@ function toggleSettings(){
  }
 }
 function goToPage(page,source=null,remember=true){setAddFabOpen(false);if(!document.getElementById(page))page='today';document.querySelectorAll('.nav button,.page').forEach(x=>x.classList.remove('active'));let p=document.getElementById(page);if(p)p.classList.add('active');let nb=document.querySelector(`.nav button[data-page="${page}"]`);if(nb)nb.classList.add('active');if(page!=='settings')localStorage.setItem('macroTrackerLastMainPage',page);let sb=document.getElementById('settingsBtn');if(sb){let open=page==='settings';sb.textContent=open?'×':'⚙';sb.setAttribute('aria-label',open?'Close settings':'Settings');sb.title=open?'Close settings':'Settings'}if(remember)localStorage.setItem('macroTrackerCurrentPage',page);render(page);window.scrollTo({top:0,behavior:'auto'})}
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>goToPage(b.dataset.page,b));foodSearch.oninput=e=>renderFoods(e.target.value);pickerSearch.oninput=renderPicker;quickEntryInput.addEventListener('keydown',e=>{if(e.key==='Enter')parseQuickEntry()});amountInput.oninput=updatePreview;editEntryAmount.oninput=updateEntryPreview;importFile.onchange=e=>e.target.files[0]&&importData(e.target.files[0]);document.querySelectorAll('.periods button').forEach(b=>b.onclick=()=>{historyDays=b.dataset.days==='all'?'all':+b.dataset.days;document.querySelectorAll('.periods button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{historyMode=b.dataset.mode;document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.series button').forEach(b=>b.onclick=()=>{let k=b.dataset.series;historySeries.has(k)?historySeries.delete(k):historySeries.add(k);b.classList.toggle('active',historySeries.has(k));renderHistory()});document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));document.addEventListener('click',e=>{let wrap=document.getElementById('addFabWrap');if(wrap&&wrap.classList.contains('open')&&!wrap.contains(e.target))setAddFabOpen(false)});let initialPage=localStorage.getItem('macroTrackerCurrentPage')||'today';goToPage(initialPage,null,false);
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>goToPage(b.dataset.page,b));foodSearch.oninput=e=>renderFoods(e.target.value);pickerSearch.oninput=renderPicker;quickEntryInput.addEventListener('keydown',e=>{if(e.key==='Enter')parseQuickEntry()});barcodeManual.addEventListener('keydown',e=>{if(e.key==='Enter')lookupManualBarcode()});amountInput.oninput=updatePreview;editEntryAmount.oninput=updateEntryPreview;importFile.onchange=e=>e.target.files[0]&&importData(e.target.files[0]);document.querySelectorAll('.periods button').forEach(b=>b.onclick=()=>{historyDays=b.dataset.days==='all'?'all':+b.dataset.days;document.querySelectorAll('.periods button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{historyMode=b.dataset.mode;document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('active',x===b));renderHistory()});document.querySelectorAll('.series button').forEach(b=>b.onclick=()=>{let k=b.dataset.series;historySeries.has(k)?historySeries.delete(k):historySeries.add(k);b.classList.toggle('active',historySeries.has(k));renderHistory()});document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));document.addEventListener('click',e=>{let wrap=document.getElementById('addFabWrap');if(wrap&&wrap.classList.contains('open')&&!wrap.contains(e.target))setAddFabOpen(false)});let initialPage=localStorage.getItem('macroTrackerCurrentPage')||'today';goToPage(initialPage,null,false);
 </script><script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js'));
